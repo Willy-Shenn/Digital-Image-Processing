@@ -63,7 +63,11 @@
           <label for="tech_wavelet">Wavelet Denoising</label>
         </div>
         <label for="wavelet">Wavelet</label>
-        <input type="text" id="wavelet" name="wavelet" value="db2" placeholder="db2 / db4 / haar">
+        <select id="wavelet" name="wavelet">
+          {% for w in wavelets %}
+          <option value="{{ w }}" {% if w == 'db2' %}selected{% endif %}>{{ w }}</option>
+          {% endfor %}
+        </select>
         <label for="level">分解層數 level</label>
         <input type="number" step="1" min="1" max="4" id="level" name="level" value="2">
       </div>

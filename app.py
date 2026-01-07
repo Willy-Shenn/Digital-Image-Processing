@@ -26,6 +26,12 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10 MB
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
+# Wavelet families exposed in UI (auto-expanded from PyWavelets).
+WAVELET_FAMILIES = ["haar", "db", "sym", "coif", "bior", "rbio", "dmey"]
+WAVELET_CHOICES = sorted({w for fam in WAVELET_FAMILIES for w in pywt.wavelist(fam)})
+
+
+
 
 # ---------- utilities ----------
 
@@ -293,7 +299,7 @@ def process_wavelet(image: np.ndarray, ts: str, wavelet: str = "db2", level: int
 # ---------- routes ----------
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", wavelets=WAVELET_CHOICES)
 
 
 @app.route("/process", methods=["POST"])
@@ -344,6 +350,8 @@ def process():
 
     if "wavelet" in techniques:
         wavelet = request.form.get("wavelet", "db2") or "db2"
+        if wavelet not in WAVELET_CHOICES:
+            wavelet = "db2"
         try:
             level = int(request.form.get("level", 2))
         except ValueError:
