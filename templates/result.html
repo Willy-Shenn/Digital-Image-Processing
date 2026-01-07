@@ -22,10 +22,9 @@
     .mode { display:none; }
     .mode.active { display:block; }
     .slider-shell, .overlay-shell { position: relative; width: 100%; max-width: 900px; margin: 0 auto; background:#111827; border:1px solid #1f2937; border-radius:12px; padding:12px; }
-    .slider-images { position: relative; overflow: hidden; border-radius: 10px; }
-    .slider-images img { display:block; width:100%; height:auto; }
-    .slider-images .overlay { position:absolute; top:0; left:0; height:100%; width:50%; overflow:hidden; border-right:2px solid #f8fafc; }
-    .slider-images .overlay img { width:100%; height:100%; object-fit: cover; }
+    .slider-images { position: relative; overflow: hidden; border-radius: 10px; aspect-ratio: 16 / 9; background:#0b1220; }
+    .slider-images img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit: contain; }
+    .slider-images .overlay { clip-path: inset(0 50% 0 0); border-right:2px solid #f8fafc; }
     .slider-control { width:100%; margin-top:8px; }
     .labels { display:flex; justify-content: space-between; font-weight:700; margin-top:6px; }
     .overlay-shell img { width:100%; display:block; border-radius:10px; }
@@ -51,7 +50,7 @@
 
   <div class="original">
     <h2>原圖</h2>
-    <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="original">
+    <img src="{{ url_for('serve_file', filepath=meta.original) }}?v={{ meta.timestamp }}" alt="original">
   </div>
 
   <div class="panes">
@@ -79,10 +78,8 @@
       <div id="slider-{{ tech_id }}" class="mode active">
         <div class="slider-shell">
           <div class="slider-images" id="slider-img-{{ tech_id }}">
-            <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="orig">
-            <div class="overlay" style="width:50%">
-              <img src="{{ url_for('serve_file', filepath=tech.processed) }}" alt="proc">
-            </div>
+            <img class="base" src="{{ url_for('serve_file', filepath=meta.original) }}?v={{ meta.timestamp }}" alt="orig">
+            <img class="overlay" src="{{ url_for('serve_file', filepath=tech.processed) }}?v={{ meta.timestamp }}" alt="proc">
           </div>
           <input type="range" min="0" max="100" value="50" class="slider-control" data-target="{{ tech_id }}">
           <div class="labels"><span>Original</span><span>處理後</span></div>
@@ -91,21 +88,21 @@
 
       <div id="overlay-{{ tech_id }}" class="mode">
         <div class="slider-shell overlay-shell" style="height:auto;">
-          <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="orig">
-          <img src="{{ url_for('serve_file', filepath=tech.processed) }}" alt="proc" class="overlay-img" data-overlay="{{ tech_id }}" style="opacity:0.5">
+          <img src="{{ url_for('serve_file', filepath=meta.original) }}?v={{ meta.timestamp }}" alt="orig">
+          <img src="{{ url_for('serve_file', filepath=tech.processed) }}?v={{ meta.timestamp }}" alt="proc" class="overlay-img" data-overlay="{{ tech_id }}" style="opacity:0.5">
           <input type="range" min="0" max="100" value="50" class="alpha-control" data-target="{{ tech_id }}">
         </div>
         <div class="labels" style="margin-top:10px;"><span>0% 透明</span><span>100% 疊圖</span></div>
       </div>
 
       <div id="diff-{{ tech_id }}" class="mode">
-        <img class="diff-img" src="{{ url_for('serve_file', filepath=tech.diff) }}" alt="diff">
+        <img class="diff-img" src="{{ url_for('serve_file', filepath=tech.diff) }}?v={{ meta.timestamp }}" alt="diff">
       </div>
 
       {% if tech.charts %}
       <div class="charts">
         {% for chart in tech.charts %}
-        <img src="{{ url_for('serve_file', filepath=chart) }}" alt="chart">
+        <img src="{{ url_for('serve_file', filepath=chart) }}?v={{ meta.timestamp }}" alt="chart">
         {% endfor %}
       </div>
       {% endif %}
@@ -129,7 +126,7 @@
     range.addEventListener('input', () => {
       const id = range.dataset.target;
       const overlay = document.querySelector('#slider-img-' + id + ' .overlay');
-      if (overlay) overlay.style.width = range.value + '%';
+      if (overlay) overlay.style.clipPath = `inset(0 ${100 - range.value}% 0 0)`;
     });
   });
 

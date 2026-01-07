@@ -35,7 +35,8 @@ def ensure_dirs() -> None:
 
 
 def timestamp() -> str:
-    return datetime.now().strftime("%y%m%d%H%M%S")
+    # microsecond precision避免檔名衝突導致讀取到錯誤的原圖
+    return datetime.now().strftime("%y%m%d%H%M%S%f")
 
 
 def allowed_file(filename: str) -> bool:
