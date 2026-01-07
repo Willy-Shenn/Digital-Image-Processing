@@ -294,7 +294,7 @@ T = \sigma\sqrt{2\ln N}
 - threshold 類型：soft / hard（本專案用 soft）
 
 #### (5) 必須展示的圖表（建議）
-- 高頻係數分布直方圖（threshold 前後）
+- 4高頻係數分布直方圖（threshold 前後）
 - threshold 曲線示意（soft-threshold 的折線形狀）
 - 或者展示四子帶拼圖（LL/LH/HL/HH）作為「原理圖」
 
