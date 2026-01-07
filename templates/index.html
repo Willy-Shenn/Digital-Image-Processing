@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Image Processing Web App</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 24px; background: #0f172a; color: #e2e8f0; }
+    h1 { margin-top: 0; }
+    form { background: #111827; padding: 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; background: #0b1220; padding: 12px; border-radius: 10px; border: 1px solid #1f2937; }
+    label { font-weight: 600; }
+    input, select { padding: 8px 10px; border-radius: 6px; border: 1px solid #1f2937; background: #111827; color: #e2e8f0; }
+    input[type="checkbox"] { width: auto; }
+    button { background: linear-gradient(90deg, #2563eb, #7c3aed); color: #fff; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    button:hover { opacity: 0.95; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .note { font-size: 0.9rem; color: #cbd5e1; }
+    .warning { color: #fbbf24; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Flask 彩色影像處理系統</h1>
+  <p class="note">上傳彩色影像並選擇要執行的技術。所有輸出皆存入 <code>./result</code>，時間戳命名。建議於 <code>venv</code> 內啟動：<code>flask --app app.py run --debug</code></p>
+
+  <form action="{{ url_for('process') }}" method="post" enctype="multipart/form-data">
+    <div class="field">
+      <label for="image">上傳圖片 (jpg/png)</label>
+      <input type="file" id="image" name="image" accept="image/png, image/jpeg" required>
+      <p class="note">檔案大小上限 10 MB</p>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <div class="row">
+          <input type="checkbox" id="tech_interpolation" name="techniques" value="interpolation" checked>
+          <label for="tech_interpolation">Interpolation（插值）</label>
+        </div>
+        <label for="interp_method">方法</label>
+        <select name="interp_method" id="interp_method">
+          <option value="bicubic" selected>Bicubic</option>
+          <option value="bilinear">Bilinear</option>
+        </select>
+        <label for="interp_scale">自我一致性縮放倍率（先縮小再放大）</label>
+        <input type="number" step="0.1" min="1.1" id="interp_scale" name="interp_scale" value="1.5">
+      </div>
+
+      <div class="field">
+        <div class="row">
+          <input type="checkbox" id="tech_hist" name="techniques" value="hist_eq" checked>
+          <label for="tech_hist">Histogram Equalization / CLAHE</label>
+        </div>
+        <label for="clip_limit">CLAHE clipLimit</label>
+        <input type="number" step="0.1" min="0.1" id="clip_limit" name="clip_limit" value="2.0">
+        <label for="tile_grid">tileGridSize（整數）</label>
+        <input type="number" step="1" min="2" id="tile_grid" name="tile_grid" value="8">
+      </div>
+
+      <div class="field">
+        <div class="row">
+          <input type="checkbox" id="tech_wavelet" name="techniques" value="wavelet" checked>
+          <label for="tech_wavelet">Wavelet Denoising</label>
+        </div>
+        <label for="wavelet">Wavelet</label>
+        <input type="text" id="wavelet" name="wavelet" value="db2" placeholder="db2 / db4 / haar">
+        <label for="level">分解層數 level</label>
+        <input type="number" step="1" min="1" max="4" id="level" name="level" value="2">
+      </div>
+    </div>
+
+    <p class="warning">提交後請稍候，處理完成將跳轉至結果頁。</p>
+    <button type="submit">開始處理</button>
+  </form>
+</body>
+</html>

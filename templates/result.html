@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>處理結果 | Color Image Processing</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#0f172a; --accent:#2563eb; --accent2:#7c3aed; --text:#e2e8f0; }
+    * { box-sizing: border-box; }
+    body { margin:0; padding:24px; font-family: "Segoe UI", Arial, sans-serif; background: radial-gradient(circle at 20% 20%, #111827, #0b1220 50%), linear-gradient(120deg, rgba(37,99,235,0.12), rgba(124,58,237,0.18)); color: var(--text); }
+    h1, h2 { margin: 0 0 12px; }
+    a { color: #93c5fd; }
+    .header { display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap:12px; margin-bottom: 16px; }
+    .panes { display:flex; flex-direction: column; gap:18px; }
+    .pane { background: var(--panel); border:1px solid #1f2937; border-radius: 14px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    .pane-header { display:flex; justify-content: space-between; gap:12px; flex-wrap: wrap; align-items:center; }
+    .metrics { display:flex; flex-wrap: wrap; gap:10px; }
+    .metric { background:#111827; padding:8px 10px; border-radius:10px; border:1px solid #1f2937; }
+    .mode-tabs { display:flex; gap:8px; margin:12px 0; }
+    .mode-tabs button { background: #111827; color: var(--text); border:1px solid #1f2937; padding:8px 10px; border-radius: 8px; cursor: pointer; }
+    .mode-tabs button.active { border-color: var(--accent); color:#fff; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .mode { display:none; }
+    .mode.active { display:block; }
+    .slider-shell, .overlay-shell { position: relative; width: 100%; max-width: 900px; margin: 0 auto; background:#111827; border:1px solid #1f2937; border-radius:12px; padding:12px; }
+    .slider-images { position: relative; overflow: hidden; border-radius: 10px; }
+    .slider-images img { display:block; width:100%; height:auto; }
+    .slider-images .overlay { position:absolute; top:0; left:0; height:100%; width:50%; overflow:hidden; border-right:2px solid #f8fafc; }
+    .slider-images .overlay img { width:100%; height:100%; object-fit: cover; }
+    .slider-control { width:100%; margin-top:8px; }
+    .labels { display:flex; justify-content: space-between; font-weight:700; margin-top:6px; }
+    .overlay-shell img { width:100%; display:block; border-radius:10px; }
+    .overlay-shell .overlay-img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; mix-blend-mode: normal; }
+    .overlay-shell { padding:0; overflow:hidden; }
+    .overlay-shell .alpha-control { position:absolute; top:50%; right:12px; transform: rotate(-90deg) translate(-50%, 0); transform-origin: center; width:180px; }
+    .diff-img { width:100%; max-width:900px; display:block; margin: 0 auto; border-radius:10px; background:#0b1220; border:1px solid #1f2937; }
+    .charts { display:flex; gap:12px; flex-wrap: wrap; margin-top:12px; }
+    .charts img { width:360px; max-width: 100%; border-radius:10px; border:1px solid #1f2937; background:#0b1220; }
+    .back { text-decoration:none; font-weight:700; }
+    .original { margin-bottom: 16px; }
+    .original img { width:320px; max-width:100%; border-radius:10px; border:1px solid #1f2937; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>處理結果</h1>
+      <p>時間戳：<strong>{{ meta.timestamp }}</strong> · 原圖存於 <code>input</code></p>
+      <a class="back" href="{{ url_for('index') }}">← 返回上傳頁</a>
+    </div>
+  </div>
+
+  <div class="original">
+    <h2>原圖</h2>
+    <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="original">
+  </div>
+
+  <div class="panes">
+    {% for tech in meta.techniques %}
+    {% set tech_id = tech.key ~ '-' ~ loop.index %}
+    <div class="pane" id="pane-{{ tech_id }}">
+      <div class="pane-header">
+        <div>
+          <h3>{{ tech.title }}</h3>
+          <p>{{ tech.description }}</p>
+        </div>
+        <div class="metrics">
+          {% for name, val in tech.metrics.items() %}
+            <div class="metric">{{ name }}: {{ '%.4f' % val }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mode-tabs">
+        <button type="button" class="tab-btn active" data-target="slider-{{ tech_id }}">滑桿式</button>
+        <button type="button" class="tab-btn" data-target="overlay-{{ tech_id }}">疊圖式</button>
+        <button type="button" class="tab-btn" data-target="diff-{{ tech_id }}">相減式</button>
+      </div>
+
+      <div id="slider-{{ tech_id }}" class="mode active">
+        <div class="slider-shell">
+          <div class="slider-images" id="slider-img-{{ tech_id }}">
+            <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="orig">
+            <div class="overlay" style="width:50%">
+              <img src="{{ url_for('serve_file', filepath=tech.processed) }}" alt="proc">
+            </div>
+          </div>
+          <input type="range" min="0" max="100" value="50" class="slider-control" data-target="{{ tech_id }}">
+          <div class="labels"><span>Original</span><span>處理後</span></div>
+        </div>
+      </div>
+
+      <div id="overlay-{{ tech_id }}" class="mode">
+        <div class="slider-shell overlay-shell" style="height:auto;">
+          <img src="{{ url_for('serve_file', filepath=meta.original) }}" alt="orig">
+          <img src="{{ url_for('serve_file', filepath=tech.processed) }}" alt="proc" class="overlay-img" data-overlay="{{ tech_id }}" style="opacity:0.5">
+          <input type="range" min="0" max="100" value="50" class="alpha-control" data-target="{{ tech_id }}">
+        </div>
+        <div class="labels" style="margin-top:10px;"><span>0% 透明</span><span>100% 疊圖</span></div>
+      </div>
+
+      <div id="diff-{{ tech_id }}" class="mode">
+        <img class="diff-img" src="{{ url_for('serve_file', filepath=tech.diff) }}" alt="diff">
+      </div>
+
+      {% if tech.charts %}
+      <div class="charts">
+        {% for chart in tech.charts %}
+        <img src="{{ url_for('serve_file', filepath=chart) }}" alt="chart">
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      const pane = btn.closest('.pane');
+      pane.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pane.querySelectorAll('.mode').forEach(m => m.classList.remove('active'));
+      pane.querySelector('#' + target).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.slider-control').forEach(range => {
+    range.addEventListener('input', () => {
+      const id = range.dataset.target;
+      const overlay = document.querySelector('#slider-img-' + id + ' .overlay');
+      if (overlay) overlay.style.width = range.value + '%';
+    });
+  });
+
+  document.querySelectorAll('.alpha-control').forEach(range => {
+    range.addEventListener('input', () => {
+      const id = range.dataset.target;
+      const overlayImg = document.querySelector('[data-overlay="' + id + '"]');
+      if (overlayImg) overlayImg.style.opacity = (range.value / 100).toString();
+    });
+  });
+</script>
+</body>
+</html>
