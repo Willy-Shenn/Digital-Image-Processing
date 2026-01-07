@@ -308,15 +308,17 @@ def process():
         return redirect(url_for("index"))
 
     ts = timestamp()
-    file_bytes = np.frombuffer(file.read(), np.uint8)
+    ext = Path(file.filename).suffix.lower()
+    raw_bytes = file.read()
+    orig_path = INPUT_DIR / f"{ts}_orig{ext if ext else '.png'}"
+    orig_path.write_bytes(raw_bytes)  # 保存原始上傳檔，避免提前色彩轉換
+
+    file_bytes = np.frombuffer(raw_bytes, np.uint8)
     img_bgr = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     if img_bgr is None:
         flash("檔案讀取失敗，請確認圖片格式")
         return redirect(url_for("index"))
     image = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-
-    orig_path = INPUT_DIR / f"{ts}_orig.png"
-    save_image(orig_path, image)
 
     techniques = request.form.getlist("techniques")
     results: List[Dict] = []
