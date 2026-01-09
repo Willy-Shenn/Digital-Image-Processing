@@ -23,8 +23,9 @@
     .mode.active { display:block; }
     .slider-shell, .overlay-shell { position: relative; width: 100%; max-width: 900px; margin: 0 auto; background:#111827; border:1px solid #1f2937; border-radius:12px; padding:12px; }
     .slider-images { position: relative; overflow: hidden; border-radius: 10px; aspect-ratio: 16 / 9; background:#0b1220; }
-    .slider-images img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit: contain; }
-    .slider-images .overlay { clip-path: inset(0 100% 0 0); border-right:2px solid #f8fafc; }
+    .slider-images img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit: contain; z-index:1; }
+    .slider-images .overlay { clip-path: inset(0 100% 0 0); border-right:none; box-sizing: border-box; z-index:2; }
+    .slider-images .slider-divider { position:absolute; top:0; left:0; height:100%; width:0; border-left:5px solid #f8fafc; box-sizing:border-box; z-index:3; pointer-events:none; }
     .slider-control { width:100%; margin-top:8px; }
     .labels { display:flex; justify-content: space-between; font-weight:700; margin-top:6px; }
     .overlay-shell img { width:100%; display:block; border-radius:10px; }
@@ -80,6 +81,7 @@
           <div class="slider-images" id="slider-img-{{ tech_id }}">
             <img class="base" src="{{ url_for('serve_file', filepath=meta.original) }}?v={{ meta.timestamp }}" alt="orig">
             <img class="overlay" src="{{ url_for('serve_file', filepath=tech.processed) }}?v={{ meta.timestamp }}" alt="proc">
+            <div class="slider-divider" data-divider="{{ tech_id }}" style="left:0%"></div>
           </div>
           <input type="range" min="0" max="100" value="0" class="slider-control" data-target="{{ tech_id }}">
           <div class="labels"><span>Original</span><span>處理後</span></div>
@@ -126,7 +128,9 @@
     range.addEventListener('input', () => {
       const id = range.dataset.target;
       const overlay = document.querySelector('#slider-img-' + id + ' .overlay');
+      const divider = document.querySelector('#slider-img-' + id + ' .slider-divider');
       if (overlay) overlay.style.clipPath = `inset(0 ${100 - range.value}% 0 0)`;
+      if (divider) divider.style.left = `${range.value}%`;
     });
   });
 

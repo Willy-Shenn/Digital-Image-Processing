@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE / OS
+.DS_Store
+.vscode/
+Thumbs.db
+
+# Generated outputs
+input/
+result/
+*.png
+*.jpg
+*.jpeg
+
+# Matplotlib cache
+*.matplotlib-cache
